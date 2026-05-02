@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Song</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            max-width: 500px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            margin-top: 12px;
+        }
+        .error {
+            color: #a00;
+        }
+        .success {
+            color: #070;
+        }
+    </style>
+</head>
+<body>
+    <h1>Edit Song</h1>
+
+    {% if success %}
+        <p class="success">Song updated successfully.</p>
+        <script>
+            if (window.opener) {
+                window.opener.location.reload();
+                window.close();
+            }
+        </script>
+    {% else %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if song_fields %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="track_id" value="{{ track_id }}" />
+                <input type="hidden" name="update" value="yes" />
+                {% for column, value in song_fields %}
+                    <label>
+                        {{ column|capfirst }}
+                        <input type="text" name="{{ column }}" value="{{ value }}" />
+                    </label>
+                {% endfor %}
+                <button type="submit">Save Changes</button>
+                <button type="button" onclick="window.location.href = window.location.pathname;">Change track_id</button>
+                <button type="button" onclick="window.close();">Cancel</button>
+            </form>
+        {% else %}
+            <form method="post">
+                {% csrf_token %}
+                <label>
+                    Track ID
+                    <input type="text" name="track_id" value="{{ track_id }}" />
+                </label>
+                <button type="submit">Load song details</button>
+                <button type="button" onclick="window.close();">Cancel</button>
+            </form>
+        {% endif %}
+    {% endif %}
+</body>
+</html>

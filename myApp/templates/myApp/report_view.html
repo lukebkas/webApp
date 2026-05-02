@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Current View Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1, h2 {
+            margin-bottom: 8px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+        }
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .summary-note {
+            margin-bottom: 20px;
+            color: #555;
+        }
+        .message {
+            margin-top: 16px;
+            color: #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Current View Report</h1>
+    <p class="summary-note">Report of the average, minimum, and maximum value of selected columns with filters applied.  Additionally, the most common values of descriptive columns where there are at least 3 occurances and no ties.</p>
+    <p><strong>Number of selected rows:</strong> {{ selected_row_count }}</p>
+    <p>
+        <button type="button" id="close-report-button">Close report</button>
+    </p>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const closeButton = document.getElementById("close-report-button");
+            closeButton.addEventListener("click", function () {
+                if (window.opener) {
+                    window.close();
+                }
+            });
+        });
+    </script>
+
+    {% if numeric_stats %}
+        <h2>Numeric column summary</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Column</th>
+                    <th>Average</th>
+                    <th>Max</th>
+                    <th>Min</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in numeric_stats %}
+                    <tr>
+                        <td>{{ stat.column }}</td>
+                        <td>{{ stat.average }}</td>
+                        <td>{{ stat.max }}</td>
+                        <td>{{ stat.min }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="message">No visible numeric columns were selected for this view.</p>
+    {% endif %}
+
+    {% if string_modes %}
+        <h2>Most common values for descriptive columns</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Column</th>
+                    <th>Most common value(s)</th>
+                    <th>Count</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mode in string_modes %}
+                    <tr>
+                        <td>{{ mode.column }}</td>
+                        <td>{{ mode.most_common }}</td>
+                        <td>{{ mode.count }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="message">No descriptive column had a most common value that wasn't a tie or less than 3.</p>
+    {% endif %}
+</body>
+</html>

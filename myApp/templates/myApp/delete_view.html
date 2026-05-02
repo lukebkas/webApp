@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Delete Current View</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            margin-top: 16px;
+        }
+        .success {
+            color: #070;
+        }
+        .error {
+            color: #a00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Delete Current View</h1>
+
+    {% if success %}
+        <p class="success">Deleted {{ deleted_count }} rows from the current view.</p>
+        <script>
+            if (window.opener) {
+                window.opener.location.reload();
+                window.close();
+            }
+        </script>
+    {% else %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <p>There are <strong>{{ row_count }}</strong> rows currently displayed in this view.</p>
+        <p>Are you sure you want to delete these rows?</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="confirm" value="yes" />
+            <button type="submit">Yes, delete {{ row_count }} rows</button>
+            <button type="button" onclick="window.close();">Cancel</button>
+        </form>
+    {% endif %}
+</body>
+</html>

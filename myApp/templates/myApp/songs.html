@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Songs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+        }
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+        #song-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+        #song-table table {
+            width: auto;
+            min-width: 100%;
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .filter-row select,
+        .filter-row input {
+            min-width: 140px;
+        }
+        .filter-row .filter-val2 {
+            display: none;
+        }
+        .filter-row .filter-val2.active {
+            display: inline-block;
+        }
+        .filter-row button {
+            min-width: 78px;
+        }
+        .filter-controls {
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Spotify Data</h1>
+
+    <p>
+        <button type="button" id="add-song-button">Add Song</button>
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    // ...existing code...
+
+                    document.getElementById("add-song-button").addEventListener("click", function () {
+                        const formData = new FormData(document.getElementById("column-form"));
+                        const params = new URLSearchParams();
+                        for (const [name, value] of formData.entries()) {
+                            if (value === "") continue;
+                            params.append(name, value);
+                        }
+                        window.open(`{% url "add_song" %}?${params.toString()}`, "AddSong", "width=900,height=700");
+                    });
+                });
+            </script>
+        <button type="button" onclick='window.open("{% url "delete_song" %}", "DeleteSong", "width=900,height=700")'>Delete Song</button>
+        <button type="button" onclick='window.open("{% url "edit_song" %}", "EditSong", "width=900,height=700")'>Edit Song</button>
+        <button type="button" id="delete-view-button">Delete Current View</button>
+        <button type="button" id="report-view-button">Make Report</button>
+    </p>
+
+    <form method="get" id="column-form">
+        <fieldset style="margin-top: 16px;">
+            <legend>Filters</legend>
+            <div class="filter-controls">
+                <button type="button" id="add-filter">Create new filter</button>
+            </div>
+            <div id="filter-container">
+                {% for filter in filter_rows %}
+                    <div class="filter-row" data-index="{{ forloop.counter0 }}">
+                        <select name="filter_col_{{ forloop.counter0 }}" class="filter-col">
+                            {% for column in all_columns %}
+                                <option value="{{ column }}" {% if filter.column == column %}selected{% endif %}>
+                                    {% if column == 'track_id' %}Track ID
+                                    {% elif column == 'album_name' %}Album Name
+                                    {% elif column == 'track_name' %}Track Name
+                                    {% elif column == 'duration_ms' %}Duration (ms)
+                                    {% elif column == 'time_signature' %}Time Signature
+                                    {% elif column == 'track_genre' %}Genre
+                                    {% else %}{{ column|capfirst }}{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <select name="filter_op_{{ forloop.counter0 }}" class="filter-op">
+                            <option value="equals" {% if filter.op == "equals" %}selected{% endif %}>equals</option>
+                            <option value="not_equals" {% if filter.op == "not_equals" %}selected{% endif %}>not equals</option>
+                            <option value="contains" {% if filter.op == "contains" %}selected{% endif %}>contains</option>
+                            <option value="starts_with" {% if filter.op == "starts_with" %}selected{% endif %}>starts with</option>
+                            <option value="ends_with" {% if filter.op == "ends_with" %}selected{% endif %}>ends with</option>
+                            <option value="lt" {% if filter.op == "lt" %}selected{% endif %}>&lt;</option>
+                            <option value="lte" {% if filter.op == "lte" %}selected{% endif %}>&le;</option>
+                            <option value="gt" {% if filter.op == "gt" %}selected{% endif %}>&gt;</option>
+                            <option value="gte" {% if filter.op == "gte" %}selected{% endif %}>&ge;</option>
+                            <option value="between" {% if filter.op == "between" %}selected{% endif %}>between</option>
+                        </select>
+                        <input type="text" name="filter_val_{{ forloop.counter0 }}" class="filter-val" value="{{ filter.val }}" placeholder="Value" />
+                        <input type="text" name="filter_val2_{{ forloop.counter0 }}" class="filter-val2{% if filter.op == 'between' %} active{% endif %}" value="{{ filter.val2 }}" placeholder="Second value" />
+                        <button type="button" class="remove-filter">Remove</button>
+                    </div>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <template id="filter-row-template">
+            <div class="filter-row" data-index="__IDX__">
+                <select name="filter_col___IDX__" class="filter-col">
+                    {% for column in all_columns %}
+                        <option value="{{ column }}">
+                            {% if column == 'track_id' %}Track ID
+                            {% elif column == 'album_name' %}Album Name
+                            {% elif column == 'track_name' %}Track Name
+                            {% elif column == 'duration_ms' %}Duration (ms)
+                            {% elif column == 'time_signature' %}Time Signature
+                            {% elif column == 'track_genre' %}Genre
+                            {% else %}{{ column|capfirst }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="filter_op___IDX__" class="filter-op">
+                    <option value="equals">equals</option>
+                    <option value="not_equals">not equals</option>
+                    <option value="contains">contains</option>
+                    <option value="starts_with">starts with</option>
+                    <option value="ends_with">ends with</option>
+                    <option value="lt">&lt;</option>
+                    <option value="lte">&le;</option>
+                    <option value="gt">&gt;</option>
+                    <option value="gte">&ge;</option>
+                    <option value="between">between</option>
+                </select>
+                <input type="text" name="filter_val___IDX__" class="filter-val" placeholder="Value" />
+                <input type="text" name="filter_val2___IDX__" class="filter-val2" placeholder="Second value" style="display:none;" />
+                <button type="button" class="remove-filter">Remove</button>
+            </div>
+        </template>
+
+        <fieldset>
+            <legend>Choose columns to display</legend>
+            {% for column in all_columns %}
+                {% if column != 'track_id' %}
+                <label style="margin-right: 12px; white-space: nowrap;">
+                    <input
+                        type="checkbox"
+                        name="columns"
+                        value="{{ column }}"
+                        {% if column in selected_columns %}checked{% endif %}
+                    />
+                                {% if column == 'track_id' %}Track ID
+                                {% elif column == 'album_name' %}Album Name
+                                {% elif column == 'track_name' %}Track Name
+                                {% elif column == 'duration_ms' %}Duration (ms)
+                                {% elif column == 'time_signature' %}Time Signature
+                                {% elif column == 'track_genre' %}Genre
+                                {% else %}{{ column|capfirst }}{% endif %}
+                </label>
+                {% endif %}
+            {% endfor %}
+            {% if 'track_id' in all_columns %}
+                <label style="margin-right: 12px; white-space: nowrap;">
+                    <input
+                        type="checkbox"
+                        name="columns"
+                        value="track_id"
+                        {% if 'track_id' in selected_columns %}checked{% endif %}
+                    />
+                                Track ID
+                </label>
+            {% endif %}
+        </fieldset>
+
+        <fieldset style="margin-top: 16px;">
+            <legend>Sort by</legend>
+            <label style="display: inline-flex; align-items: center; gap: 8px;">
+                <select name="sort_by">
+                    <option value="default" {% if selected_sort == "default" %}selected{% endif %}>Default</option>
+                    {% for column in all_columns %}
+                        <option value="{{ column }}" {% if selected_sort == column %}selected{% endif %}>
+                            {% if column == 'track_id' %}Track ID
+                            {% elif column == 'album_name' %}Album Name
+                            {% elif column == 'track_name' %}Track Name
+                            {% elif column == 'duration_ms' %}Duration (ms)
+                            {% elif column == 'time_signature' %}Time Signature
+                            {% elif column == 'track_genre' %}Genre
+                            {% else %}{{ column|capfirst }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <select name="sort_dir">
+                    <option value="asc" {% if selected_sort_dir == "asc" %}selected{% endif %}>Ascending</option>
+                    <option value="desc" {% if selected_sort_dir == "desc" %}selected{% endif %}>Descending</option>
+                </select>
+            </label>
+        </fieldset>
+
+    </form>
+
+    <div id="song-table">
+        {% if rows %}
+            <table>
+                <thead>
+                    <tr>
+                        {% for column in columns %}
+                            <th>{% if column == "track_id" %}Track ID{% elif column == "album_name" %}Album Name{% elif column == "track_name" %}Track Name{% elif column == "duration_ms" %}Duration (ms){% elif column == "time_signature" %}Time Signature{% elif column == "track_genre" %}Genre{% else %}{{ column|capfirst }}{% endif %}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        <tr>
+                            {% for item in row %}
+                                <td>{{ item }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No songs were found in the database.</p>
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("column-form");
+            const tableContainer = document.getElementById("song-table");
+            const filterContainer = document.getElementById("filter-container");
+            const filterTemplate = document.getElementById("filter-row-template").innerHTML;
+            let filterIndex = {{ filter_rows|length|default:"0" }};
+
+            function addFilterRow(data = {}) {
+                const index = filterIndex++;
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = filterTemplate.replace(/__IDX__/g, index);
+                const row = wrapper.firstElementChild;
+
+                if (data.column) {
+                    row.querySelector(".filter-col").value = data.column;
+                }
+                if (data.op) {
+                    row.querySelector(".filter-op").value = data.op;
+                }
+                if (data.val) {
+                    row.querySelector(".filter-val").value = data.val;
+                }
+                if (data.val2) {
+                    row.querySelector(".filter-val2").value = data.val2;
+                }
+
+                updateBetweenVisibility(row);
+                filterContainer.appendChild(row);
+            }
+
+            function updateBetweenVisibility(row) {
+                const op = row.querySelector(".filter-op").value;
+                const second = row.querySelector(".filter-val2");
+                second.style.display = op === "between" ? "inline-block" : "none";
+            }
+
+            filterContainer.addEventListener("click", function (event) {
+                if (event.target.classList.contains("remove-filter")) {
+                    event.target.closest(".filter-row").remove();
+                    updateTable();
+                }
+            });
+
+            filterContainer.addEventListener("change", function (event) {
+                if (event.target.classList.contains("filter-op")) {
+                    const row = event.target.closest(".filter-row");
+                    updateBetweenVisibility(row);
+                }
+                updateTable();
+            });
+
+            document.getElementById("add-filter").addEventListener("click", function () {
+                addFilterRow();
+            });
+
+            document.querySelectorAll(".filter-row").forEach(function (row) {
+                updateBetweenVisibility(row);
+            });
+
+            function renderHeaderLabel(column) {
+                if (column === "track_id") {
+                    return "Track ID";
+                }
+                if (column === "album_name") {
+                    return "Album Name";
+                }
+                if (column === "track_name") {
+                    return "Track Name";
+                }
+                if (column === "duration_ms") {
+                    return "Duration (ms)";
+                }
+                if (column === "time_signature") {
+                    return "Time Signature";
+                }
+                if (column === "track_genre") {
+                    return "Genre";
+                }
+                return column.charAt(0).toUpperCase() + column.slice(1);
+            }
+
+            function buildTable(columns, rows) {
+                if (!rows.length) {
+                    return "<p>No songs were found in the database.</p>";
+                }
+
+                const headerCells = columns.map(col => `<th>${renderHeaderLabel(col)}</th>`).join("");
+                const bodyRows = rows
+                    .map(row => {
+                        const cells = row.map(item => `<td>${item === null ? "" : item}</td>`).join("");
+                        return `<tr>${cells}</tr>`;
+                    })
+                    .join("");
+
+                return `
+                    <table>
+                        <thead>
+                            <tr>${headerCells}</tr>
+                        </thead>
+                        <tbody>${bodyRows}</tbody>
+                    </table>
+                `;
+            }
+
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                updateTable();
+            });
+
+            form.addEventListener("change", function () {
+                updateTable();
+            });
+
+            function buildCurrentParams() {
+                const formData = new FormData(form);
+                const params = new URLSearchParams();
+                for (const [name, value] of formData.entries()) {
+                    if (value === "") {
+                        continue;
+                    }
+                    params.append(name, value);
+                }
+                return params;
+            }
+
+            document.getElementById("delete-view-button").addEventListener("click", function () {
+                const params = buildCurrentParams();
+                window.open(`${window.location.origin}/delete_view/?${params.toString()}`, "DeleteCurrentView", "width=900,height=700");
+            });
+
+            document.getElementById("report-view-button").addEventListener("click", function () {
+                const params = buildCurrentParams();
+                window.open(`{% url "report_current_view" %}?${params.toString()}`, "ReportCurrentView", "width=900,height=700");
+            });
+
+            function updateTable() {
+                const formData = new FormData(form);
+                const params = new URLSearchParams();
+                for (const [name, value] of formData.entries()) {
+                    if (value === "") {
+                        continue;
+                    }
+                    params.append(name, value);
+                }
+
+                fetch(`${window.location.pathname}?${params.toString()}`, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        tableContainer.innerHTML = buildTable(data.columns, data.rows);
+                    })
+                    .catch(error => {
+                        console.error("Unable to load songs:", error);
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

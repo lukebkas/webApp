@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Delete Song</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        label, p {
+            margin: 10px 0;
+        }
+        input[type="text"] {
+            width: 100%;
+            max-width: 500px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+        .error {
+            color: #a00;
+        }
+        .success {
+            color: #070;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 12px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Delete Song</h1>
+
+    {% if success %}
+        <p class="success">Song deleted successfully.</p>
+        <script>
+            if (window.opener) {
+                window.opener.location.reload();
+                window.close();
+            }
+        </script>
+    {% else %}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if song %}
+            <p>Track details for <strong>{{ track_id }}</strong>:</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for name, value in song %}
+                        <tr>
+                            <th>{{ name }}</th>
+                            <td>{{ value }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <form method="post" style="margin-top: 16px;">
+                {% csrf_token %}
+                <input type="hidden" name="track_id" value="{{ track_id }}" />
+                <input type="hidden" name="confirm" value="yes" />
+                <button type="submit">Delete song</button>
+                <button type="button" onclick="window.location.href = window.location.pathname;">Change track_id</button>
+                <button type="button" onclick="window.close();">Cancel</button>
+            </form>
+        {% else %}
+            <form method="post">
+                {% csrf_token %}
+                <label>
+                    Track ID
+                    <input type="text" name="track_id" value="{{ track_id }}" />
+                </label>
+                <button type="submit">Load song details</button>
+                <button type="button" onclick="window.close();">Cancel</button>
+            </form>
+        {% endif %}
+    {% endif %}
+</body>
+</html>

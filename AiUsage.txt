@@ -1,0 +1,6 @@
+For this project, I used Github Copilot to build the general shell for the django app.
+This essentially made the structure of the various html files and for what was displayed on the website (button, dropdowns, etc).
+After generation, I went through it and read all of it to make sure I understood the logic.
+I also compared it to django tutorials I found online to make sure it was accurate.
+The functionality of the site and the SQL queries was coded by me.
+I also used the AI on the google Cloud Website along with Copilot for figuring out why I couldn't get the connection working.
